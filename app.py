@@ -7,7 +7,8 @@ from analysis import (
     generate_pdf_report
 )
 
-app = Flask(__name__)
+# template_folder='.' lagane se Flask HTML ko main directory mein dhoondega
+app = Flask(__name__, template_folder='.')
 df = load_data()
 
 @app.route('/')
