@@ -8,7 +8,7 @@ from .analysis import (
     get_stats, 
     compare_players_logic, 
     predict_winner_logic, 
-    generate_text_report
+    generate_pdf_report
 )
 
 app = Flask(__name__, template_folder='../')
@@ -56,7 +56,7 @@ def predict_api():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# Route is now corrected to /api/download_report
+# Professional PDF Route
 @app.route('/api/download_report')
 def download_report():
     try:
@@ -69,28 +69,29 @@ def download_report():
         
         stats = get_stats(df, team)
         
-        # Safe checks to run logic only if parameters exist
+        # Check to add prediction details if selected
         ai_info = None
         if t1 and t2 and venue:
             winner, prob = predict_winner_logic(df, t1, t2, venue)
             ai_info = {'winner': winner, 'probability': prob, 'venue': venue}
         
+        # Check to add comparison details if selected
         comp_info = None
         if p1 and p2:
             comp_info = compare_players_logic(df, p1, p2)
             
-        report_text = generate_text_report(stats, team, ai_info, comp_info)
+        # PDF logic returns byte string in python-fpdf2
+        pdf_bytes = generate_pdf_report(stats, team, ai_info, comp_info)
         
-        # Memory-based bytes stream data generator (crashless on serverless Vercel)
-        mem_file = io.BytesIO()
-        mem_file.write(report_text.encode('utf-8'))
+        # Memory-based download safe for serverless/Vercel
+        mem_file = io.BytesIO(pdf_bytes)
         mem_file.seek(0)
         
         return send_file(
             mem_file, 
             as_attachment=True, 
-            download_name="psl_analysis_report.txt",
-            mimetype="text/plain"
+            download_name="PSL_AI_Elite_Report.pdf",
+            mimetype="application/pdf"
         )
     except Exception as e:
         return jsonify({"error": str(e)}), 500
