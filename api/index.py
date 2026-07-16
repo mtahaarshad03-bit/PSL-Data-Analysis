@@ -56,7 +56,8 @@ def predict_api():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@app.route('/download_report')
+# Route is now corrected to /api/download_report
+@app.route('/api/download_report')
 def download_report():
     try:
         team = request.args.get('team', 'All Teams')
@@ -80,7 +81,7 @@ def download_report():
             
         report_text = generate_text_report(stats, team, ai_info, comp_info)
         
-        # RAM memory bytes data download stream (anti-crash on serverless Vercel)
+        # Memory-based bytes stream data generator (crashless on serverless Vercel)
         mem_file = io.BytesIO()
         mem_file.write(report_text.encode('utf-8'))
         mem_file.seek(0)

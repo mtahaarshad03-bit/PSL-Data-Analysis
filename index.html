@@ -201,7 +201,7 @@ function initializeDropdowns() {
 
     // Teams fill karein
     pslTeams.forEach(t => {
-        // Main filter dropdown (excluding All Teams custom element)
+        // Main filter dropdown
         const opt1 = document.createElement('option');
         opt1.value = t;
         opt1.innerText = t;
@@ -346,14 +346,15 @@ function downloadPDF() {
     const v = document.getElementById('predV').value;
     const p1 = document.getElementById('compP1').value;
     const p2 = document.getElementById('compP2').value;
-    window.location.href = `/download_report?team=${encodeURIComponent(team)}&t1=${encodeURIComponent(t1)}&t2=${encodeURIComponent(t2)}&v=${encodeURIComponent(v)}&p1=${encodeURIComponent(p1)}&p2=${encodeURIComponent(p2)}`;
+    
+    // '/api/download_report' routing updated for Vercel bypass
+    window.location.href = `/api/download_report?team=${encodeURIComponent(team)}&t1=${encodeURIComponent(t1)}&t2=${encodeURIComponent(t2)}&v=${encodeURIComponent(v)}&p1=${encodeURIComponent(p1)}&p2=${encodeURIComponent(p2)}`;
 }
 
 // Page load par pehle dropdowns fill karein aur phir main dashboard fetch karein
 window.onload = async function() {
     initializeDropdowns();
     await updateDashboard();
-    // Default comparison for design
     await comparePlayers();
 };
 </script>
