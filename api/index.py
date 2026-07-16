@@ -2,7 +2,7 @@ from flask import Flask, render_template, jsonify, request, send_file
 from flask_cors import CORS
 import os
 
-# Relative import ke zariye analysis module ko read karein
+# Relative import
 from .analysis import (
     load_data, 
     get_stats, 
@@ -11,11 +11,9 @@ from .analysis import (
     generate_pdf_report
 )
 
-# template_folder='../' lagane se Flask parent directory mein 'index.html' ko dhoondega
 app = Flask(__name__, template_folder='../')
-CORS(app)  # Backend request blocking (CORS error) se bachane ke liye
+CORS(app)
 
-# Data load karein
 df = load_data()
 
 @app.route('/')
@@ -27,43 +25,55 @@ def index():
 
 @app.route('/api/stats')
 def stats_api():
-    team = request.args.get('team', 'All Teams')
-    return jsonify(get_stats(df, team))
+    try:
+        team = request.args.get('team', 'All Teams')
+        data = get_stats(df, team)
+        return jsonify(data)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/api/compare')
 def compare_api():
-    p1 = request.args.get('p1')
-    p2 = request.args.get('p2')
-    return jsonify(compare_players_logic(df, p1, p2))
+    try:
+        p1 = request.args.get('p1')
+        p2 = request.args.get('p2')
+        return jsonify(compare_players_logic(df, p1, p2))
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/api/predict')
 def predict_api():
-    t1 = request.args.get('t1')
-    t2 = request.args.get('t2')
-    v = request.args.get('v')
-    winner, prob = predict_winner_logic(df, t1, t2, v)
-    return jsonify({'winner': winner, 'probability': prob})
+    try:
+        t1 = request.args.get('t1')
+        t2 = request.args.get('t2')
+        v = request.args.get('v')
+        winner, prob = predict_winner_logic(df, t1, t2, v)
+        return jsonify({'winner': winner, 'probability': prob})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/download_report')
 def download_report():
-    team = request.args.get('team', 'All Teams')
-    t1 = request.args.get('t1')
-    t2 = request.args.get('t2')
-    venue = request.args.get('v')
-    p1 = request.args.get('p1')
-    p2 = request.args.get('p2')
-    
-    stats = get_stats(df, team)
-    winner, prob = predict_winner_logic(df, t1, t2, venue)
-    ai_info = {'winner': winner, 'probability': prob, 'venue': venue}
-    
-    comp_info = None
-    if p1 and p2:
-        comp_info = compare_players_logic(df, p1, p2)
+    try:
+        team = request.args.get('team', 'All Teams')
+        t1 = request.args.get('t1')
+        t2 = request.args.get('t2')
+        venue = request.args.get('v')
+        p1 = request.args.get('p1')
+        p2 = request.args.get('p2')
         
-    pdf_path = generate_pdf_report(stats, team, ai_info, comp_info)
-    return send_file(pdf_path, as_attachment=True)
+        stats = get_stats(df, team)
+        winner, prob = predict_winner_logic(df, t1, t2, venue)
+        ai_info = {'winner': winner, 'probability': prob, 'venue': venue}
+        
+        comp_info = None
+        if p1 and p2:
+            comp_info = compare_players_logic(df, p1, p2)
+            
+        pdf_path = generate_pdf_report(stats, team, ai_info, comp_info)
+        return send_file(pdf_path, as_attachment=True, download_name="psl_report.txt")
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
-# Vercel serverless environment mein production par direct execution block hoti hai
 if __name__ == '__main__':
     app.run(debug=True)
