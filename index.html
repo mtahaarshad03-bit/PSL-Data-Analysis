@@ -105,16 +105,16 @@
     <label>SELECT TEAM</label>
     <select id="teamFilter" onchange="updateDashboard()">
         <option value="All Teams">All Teams</option>
-        {% for t in teams %}<option>{{t}}</option>{% endfor %}</select>
+    </select>
     <button class="btn-pdf" onclick="downloadPDF()">⬇️ EXPORT REPORT (PDF)</button>
     <hr style="opacity:0.1; margin:30px 0;">
     <h3 style="font-size: 0.9em; color:#fff;">MATCH PREDICTOR</h3>
     <label>TEAM 1</label>
-    <select id="predT1">{% for t in teams %}<option>{{t}}</option>{% endfor %}</select>
+    <select id="predT1"></select>
     <label>TEAM 2</label>
-    <select id="predT2">{% for t in teams %}<option>{{t}}</option>{% endfor %}</select>
+    <select id="predT2"></select>
     <label>VENUE</label>
-    <select id="predV">{% for v in venues %}<option>{{v}}</option>{% endfor %}</select>
+    <select id="predV"></select>
     <button class="btn-neon" onclick="runPrediction()">⚡ RUN AI MODEL</button>
     <div id="predResult" style="margin-top:20px; text-align:center; color:var(--neon); font-weight:bold;"></div>
 </div>
@@ -141,9 +141,9 @@
     <div class="grid">
         <div class="glass-card" style="flex:1">
             <label>PLAYER 1</label>
-            <select id="compP1">{% for p in players %}<option>{{p}}</option>{% endfor %}</select>
+            <select id="compP1"></select>
             <label>PLAYER 2</label>
-            <select id="compP2">{% for p in players %}<option>{{p}}</option>{% endfor %}</select>
+            <select id="compP2"></select>
             <button class="btn-neon" onclick="comparePlayers()" style="margin-top:20px;">⚔️ ANALYZE</button>
         </div>
         <div class="glass-card" style="flex:2">
@@ -157,6 +157,90 @@
 Chart.register(ChartDataLabels);
 
 let mainChart, compChart;
+
+// Static data lists jo dynamic loop ke bagair dropdown fill kareingi
+const pslTeams = [
+    "Islamabad United", 
+    "Karachi Kings", 
+    "Lahore Qalandars", 
+    "Multan Sultans", 
+    "Peshawar Zalmi", 
+    "Quetta Gladiators"
+];
+
+const pslVenues = [
+    "Dubai International Cricket Stadium", 
+    "Gaddafi Stadium", 
+    "Karachi Stadium", 
+    "Multan Cricket Stadium", 
+    "Rawalpindi Cricket Stadium", 
+    "Sharjah Cricket Stadium"
+];
+
+const pslPlayers = [
+    "Babar Azam", 
+    "Fakhar Zaman", 
+    "Kamran Akmal", 
+    "Mohammad Rizwan", 
+    "Shoaib Malik", 
+    "Rilee Rossouw", 
+    "Alex Hales", 
+    "Colin Munro", 
+    "Luke Ronchi", 
+    "Shane Watson"
+];
+
+// Dropdowns ko HTML load hote hi fill karne wala function
+function initializeDropdowns() {
+    const teamFilter = document.getElementById('teamFilter');
+    const predT1 = document.getElementById('predT1');
+    const predT2 = document.getElementById('predT2');
+    const predV = document.getElementById('predV');
+    const compP1 = document.getElementById('compP1');
+    const compP2 = document.getElementById('compP2');
+
+    // Teams fill karein
+    pslTeams.forEach(t => {
+        // Main filter dropdown (excluding All Teams custom element)
+        const opt1 = document.createElement('option');
+        opt1.value = t;
+        opt1.innerText = t;
+        teamFilter.appendChild(opt1);
+
+        // Match Predictor Team 1
+        const opt2 = document.createElement('option');
+        opt2.value = t;
+        opt2.innerText = t;
+        predT1.appendChild(opt2);
+
+        // Match Predictor Team 2
+        const opt3 = document.createElement('option');
+        opt3.value = t;
+        opt3.innerText = t;
+        predT2.appendChild(opt3);
+    });
+
+    // Venues fill karein
+    pslVenues.forEach(v => {
+        const opt = document.createElement('option');
+        opt.value = v;
+        opt.innerText = v;
+        predV.appendChild(opt);
+    });
+
+    // Players comparison fill karein
+    pslPlayers.forEach(p => {
+        const opt1 = document.createElement('option');
+        opt1.value = p;
+        opt1.innerText = p;
+        compP1.appendChild(opt1);
+
+        const opt2 = document.createElement('option');
+        opt2.value = p;
+        opt2.innerText = p;
+        compP2.appendChild(opt2);
+    });
+}
 
 async function updateDashboard() {
     const team = document.getElementById('teamFilter').value;
@@ -193,7 +277,7 @@ async function runPrediction() {
     const t1 = document.getElementById('predT1').value;
     const t2 = document.getElementById('predT2').value;
     const v = document.getElementById('predV').value;
-    const res = await fetch(`/api/predict?t1=${t1}&t2=${t2}&v=${v}`);
+    const res = await fetch(`/api/predict?t1=${encodeURIComponent(t1)}&t2=${encodeURIComponent(t2)}&v=${encodeURIComponent(v)}`);
     const data = await res.json();
     document.getElementById('predResult').innerText = `WINNER: ${data.winner} (${data.probability}%)`;
 }
@@ -201,7 +285,7 @@ async function runPrediction() {
 async function comparePlayers() {
     const p1 = document.getElementById('compP1').value;
     const p2 = document.getElementById('compP2').value;
-    const res = await fetch(`/api/compare?p1=${p1}&p2=${p2}`);
+    const res = await fetch(`/api/compare?p1=${encodeURIComponent(p1)}&p2=${encodeURIComponent(p2)}`);
     const data = await res.json();
     const ctx = document.getElementById('compareChart').getContext('2d');
     
@@ -233,7 +317,6 @@ async function comparePlayers() {
         options: { 
             plugins: {
                 legend: { labels: { color: '#fff', font: { size: 14 } } },
-                // Yeh hissa graph ke upar numbers dikhaye ga
                 datalabels: {
                     display: true,
                     color: '#fff',
@@ -263,10 +346,16 @@ function downloadPDF() {
     const v = document.getElementById('predV').value;
     const p1 = document.getElementById('compP1').value;
     const p2 = document.getElementById('compP2').value;
-    window.location.href = `/download_report?team=${encodeURIComponent(team)}&t1=${t1}&t2=${t2}&v=${v}&p1=${p1}&p2=${p2}`;
+    window.location.href = `/download_report?team=${encodeURIComponent(team)}&t1=${encodeURIComponent(t1)}&t2=${encodeURIComponent(t2)}&v=${encodeURIComponent(v)}&p1=${encodeURIComponent(p1)}&p2=${encodeURIComponent(p2)}`;
 }
 
-window.onload = updateDashboard;
+// Page load par pehle dropdowns fill karein aur phir main dashboard fetch karein
+window.onload = async function() {
+    initializeDropdowns();
+    await updateDashboard();
+    // Default comparison for design
+    await comparePlayers();
+};
 </script>
 </body>
 </html>
