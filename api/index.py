@@ -1,5 +1,9 @@
 from flask import Flask, render_template, jsonify, request, send_file
-from analysis import (
+from flask_cors import CORS
+import os
+
+# Relative import ke zariye analysis module ko read karein
+from .analysis import (
     load_data, 
     get_stats, 
     compare_players_logic, 
@@ -7,8 +11,11 @@ from analysis import (
     generate_pdf_report
 )
 
-# template_folder='.' lagane se Flask HTML ko main directory mein dhoondega
-app = Flask(__name__, template_folder='.')
+# template_folder='../' lagane se Flask parent directory mein 'index.html' ko dhoondega
+app = Flask(__name__, template_folder='../')
+CORS(app)  # Backend request blocking (CORS error) se bachane ke liye
+
+# Data load karein
 df = load_data()
 
 @app.route('/')
@@ -57,5 +64,6 @@ def download_report():
     pdf_path = generate_pdf_report(stats, team, ai_info, comp_info)
     return send_file(pdf_path, as_attachment=True)
 
+# Vercel serverless environment mein production par direct execution block hoti hai
 if __name__ == '__main__':
     app.run(debug=True)

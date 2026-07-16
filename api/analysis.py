@@ -3,6 +3,7 @@ import os
 from fpdf import FPDF
 
 def load_data():
+    # Vercel par crash se bachne ke liye absolute relative path ka istemaal
     base_path = os.path.dirname(__file__)
     file_path = os.path.join(base_path, 'PSL.csv')
     df = pd.read_csv(file_path)
@@ -48,14 +49,14 @@ def generate_pdf_report(stats, team_name, ai_data=None, comp_data=None):
     pdf = FPDF()
     pdf.add_page()
     
-    # Header
+    # Header Design
     pdf.set_fill_color(30, 30, 40)
     pdf.rect(0, 0, 210, 40, 'F')
     pdf.set_text_color(255, 255, 255)
     pdf.set_font("Arial", 'B', 24)
     pdf.cell(190, 25, txt="PSL AI ELITE REPORT", ln=True, align='C')
     
-    # Summary
+    # Summary Details
     pdf.set_text_color(0, 0, 0)
     pdf.ln(20)
     pdf.set_font("Arial", 'B', 16)
@@ -86,6 +87,7 @@ def generate_pdf_report(stats, team_name, ai_data=None, comp_data=None):
             pdf.cell(60, 10, str(p_stats['Runs']), border=1)
             pdf.cell(60, 10, str(p_stats['SR']), border=1, ln=True)
 
-    report_path = "psl_report.pdf"
+    # Serverless runtime temporary directory path for saving PDFs safely on Vercel
+    report_path = "/tmp/psl_report.pdf"
     pdf.output(report_path)
     return report_path
